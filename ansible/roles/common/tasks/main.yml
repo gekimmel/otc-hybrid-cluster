@@ -1,0 +1,91 @@
+- name: install ed
+  yum:
+    name: ed
+    state: present
+
+- name: install libnsl
+  yum:
+    name: libnsl
+    state: present
+
+- name: install stress
+  yum:
+    name: stress
+    state: present
+
+- name: disable firewall
+  service:
+    name: firewalld
+    state: stopped
+    enabled: false
+
+- name: create user group
+  group:
+    name: lsfadmin
+    gid: 1010
+
+- name: create user
+  user:
+    name: lsfadmin
+    shell: /bin/bash
+    uid: 1010
+    group: lsfadmin
+    comment: "lsf administrative account"
+
+- name: build /etc/hosts file
+  lineinfile:
+    dest: /etc/hosts
+    regexp: '.*{{ item }}$'
+    line: '{{ hostvars[item].ansible_facts.default_ipv4.address }} {{item}}'
+    state: present
+  when: hostvars[item].ansible_facts.default_ipv4.address is defined
+  with_items: '{{ groups["all"] }}'
+
+- name: configure /etc/hostname
+  template:
+    src: templates/hostname.j2
+    dest: /etc/hostname
+  notify:
+    - set transient hostname
+
+- name: permit ssh root login
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^PermitRootLogin'
+    line: "PermitRootLogin yes"
+    state: present
+    backup: yes
+  notify:
+    - restart ssh daemon
+
+- name: ensure /usr/share/lsf exists
+  file:
+    path: /usr/share/lsf
+    state: directory
+    mode: 0775
+
+- name: generate ssh key on lsf-master
+  openssh_keypair:
+    path: ~/.ssh/id_rsa
+  register: ssh_key
+  when: inventory_hostname == "lsf-master"
+
+- name: propagate ssh public key variable
+  set_fact:
+    ssh_pub_key: "{{ ssh_key.public_key }}"
+  with_items: "{{ groups.lsf_master }}"
+  run_once: True
+
+- name: distribute ssh key
+  authorized_key:
+    user: root
+    key: "{{ ssh_pub_key }}"
+
+- name: configure DNS domains for resolv.conf
+  lineinfile:
+    dest: /etc/sysconfig/network-scripts/ifcfg-ens3
+    regexp: 'SEARCH="openstacklocal novalocal lsf.private"'
+    line: 'SEARCH="openstacklocal novalocal lsf.private"'
+  notify:
+    - restart network service 
+

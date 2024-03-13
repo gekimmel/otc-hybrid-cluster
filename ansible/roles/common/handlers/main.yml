@@ -1,0 +1,14 @@
+- name: restart ssh daemon
+  systemd:
+    name: sshd
+    state: restarted
+
+- name: restart network service
+  systemd:
+    name: NetworkManager
+    state: restarted
+
+- name: set transient hostname
+  shell:
+    cmd: hostname {{ inventory_hostname }}
+

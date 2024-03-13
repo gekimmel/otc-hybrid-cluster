@@ -1,0 +1,14 @@
+- hosts: localhost
+  name: Print all available facts
+  tasks:
+  - name: Print all available facts
+    ansible.builtin.debug:
+      var: ansible_facts
+
+- hosts: localhost
+  name: print hostvars
+  tasks:
+  - name: print hostvars
+    ansible.builtin.debug:
+      var: hostvars['lsf-master']['ansible_host']
+

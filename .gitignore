@@ -1,0 +1,5 @@
+ansible/hosts
+provider.tf
+.terraform*
+terraform.*
+tf*

@@ -1,0 +1,35 @@
+- name: configure /etc/sysconfig/nfs
+  template:
+    src: templates/nfs.j2
+    dest: /etc/sysconfig/nfs
+
+- name: install nfs-utils
+  yum:
+    name: nfs-utils
+    state: present
+
+- name: enable nfs server service
+  systemd:
+    name: nfs-server.service
+    enabled: true
+  notify: restart nfs server service
+
+- name: ensure /data exists
+  file:
+    path: /data/lsf_download
+    state: directory
+    mode: 0777
+
+- name: configure /etc/exports
+  template:
+    src: templates/exports.j2
+    dest: /etc/exports
+  notify: restart nfs server service
+
+- name: disable strict host key checking for ssh
+  lineinfile:
+    dest: /root/.ssh/config
+    create: true
+    line: "StrictHostKeyChecking no"
+    regexp: "StrictHostKeyChecking no"
+

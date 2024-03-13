@@ -1,0 +1,141 @@
+- name: extract and configure lsf installation files
+
+  block:
+
+    - name: check if directory /data/lsf_download/lsfsce10.2.0.12-x86_64 exists
+      stat:
+        path: /data/lsf_download/lsfsce10.2.0.12-x86_64
+      register: stat_lsfsce
+
+    - name: extract lsf tar file (this may take a while...)
+      unarchive:
+        src: /data/lsf_download/lsfsce10.2.0.12-x86_64.tar.gz
+        dest: /data/lsf_download
+        remote_src: yes
+      when: not stat_lsfsce.stat.exists
+
+    - name: check if directory /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/linux2.6-glibc2.3-x86_64 exists
+      stat:
+        path: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/linux2.6-glibc2.3-x86_64
+      register: stat_lsf_install
+
+    - name: extract lsf installation package (this may take a while...)
+      unarchive:
+        src: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/lsf10.1_linux2.6-glibc2.3-x86_64.tar.Z
+        dest: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf
+        remote_src: yes
+      when: not stat_lsf_install.stat.exists
+
+    - name: check if directory /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/lsf10.1_lsfinstall exists
+      stat:
+        path: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/lsf10.1_lsfinstall
+      register: stat_lsf_linux
+
+    - name: extract lsf linux package
+      unarchive:
+        src: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/lsf10.1_lsfinstall_linux_x86_64.tar.Z
+        dest: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf
+        remote_src: yes
+      when: not stat_lsf_linux.stat.exists
+
+    - name: configure lsf install.config
+      lineinfile:
+        dest: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/lsf10.1_lsfinstall/install.config
+        regexp: '{{ item }}'
+        line: '{{ item }}'
+      with_items:
+        - LSF_TOP="/usr/share/lsf"
+        - LSF_ADMINS="lsfadmin"
+        - LSF_CLUSTER_NAME="cluster1"
+        - LSF_MASTER_LIST="lsf-master"
+        - LSF_TARDIR="/data/lsf_download/lsfsce10.2.0.12-x86_64/lsf"
+        - CONFIGURATION_TEMPLATE="DEFAULT"
+        - LSF_ADD_SERVERS="lsf-comp-priv-1 lsf-comp-priv-2 lsf-comp-priv-3 lsf-comp-pub-1 lsf-comp-pub-2 lsf-comp-pub-3"
+        - PATCH_BACKUP_DIR="/usr/share/lsf/patch/backup"
+        - PATCH_HISTORY_DIR="/usr/share/lsf/patch"
+        - ACCEPT_LICENSE="Y"
+        - SILENT_INSTALL="Y"
+        - LSF_SILENT_INSTALL_TARLIST="ALL"
+
+    - name: configure lsf server.config
+      lineinfile:
+        dest: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/lsf10.1_lsfinstall/server.config
+        regexp: '{{ item }}'
+        line: '{{ item }}'
+      with_items:
+        - LSF_TOP="/usr/local/lsf"
+        - LSF_ADMINS="lsfadmin"
+        - LSF_TARDIR="/data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/"
+        - LSF_SERVER_HOSTS="lsf-master lsf-comp-priv-1 lsf-comp-priv-2 lsf-comp-priv-3 lsf-comp-pub-1 lsf-comp-pub-2 lsf-comp-pub-3"
+        - ACCEPT_LICENSE="Y"
+        - LSF_CLUSTER_NAME=cluster1
+        - LSF_MASTER_LIST="lsf-master"
+        - SILENT_INSTALL="Y"
+        - LSF_SILENT_INSTALL_TARLIST="ALL"
+
+    - name: set acl on directories
+      acl:
+        path: '{{ item }}'
+        entity: lsfadmin
+        etype: group
+        permissions: rwx
+        state: present
+      with_items:
+      - /data/lsf_download
+
+  when: ansible_hostname == "lsf-master"
+
+- name: set acl on directories
+  acl:
+    path: '{{ item }}'
+    entity: lsfadmin
+    etype: group
+    permissions: rwx
+    state: present
+  with_items:
+    - /usr/share/lsf
+
+- name: install lsf with install.config (this may take a while...)
+  shell:
+    chdir: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/lsf10.1_lsfinstall/
+    cmd: ./lsfinstall -f install.config
+  throttle: 1
+
+- name: install lsf with server.config (this may take a while...)
+  shell:
+    chdir: /data/lsf_download/lsfsce10.2.0.12-x86_64/lsf/lsf10.1_lsfinstall/
+    cmd: ./lsfinstall -f server.config
+  throttle: 1
+
+- name: configure /etc/lsf.sudoers
+  copy:
+    src: lsf.sudoers
+    dest: /etc/lsf.sudoers
+    mode: '0600'
+
+- name: configure /usr/share/lsf/conf/lsf.conf
+  lineinfile:
+    dest: /usr/share/lsf/conf/lsf.conf
+    regexp: '{{ item }}'
+    line: '{{ item }}'
+  with_items:
+    - LSF_LOG_MASK=LOG_DEBUG2
+    - LSF_AUTH=none
+    - LSF_DISABLE_LSRUN=N
+    - LSF_RSH=ssh
+    - LSF_STRICT_CHECKING=N
+    - LSF_ROOT_REX=Y
+    - LSF_ROOT_USER=Y
+
+- name: create symlink to lsf.conf
+  file:
+    src: /usr/share/lsf/conf/lsf.conf
+    dest: /usr/local/lsf/conf/lsf.conf
+    state: link
+    force: true
+
+- name: source lsf profile to bash
+  lineinfile:
+    dest: /root/.bashrc
+    line: . /usr/share/lsf/conf/profile.lsf
+

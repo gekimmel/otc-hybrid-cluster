@@ -1,0 +1,2 @@
+LSF_STARTUP_USERS=lsfadmin
+LSF_STARTUP_PATH=/usr/share/lsf/10.1/linux2.6-glibc2.3-x86_64/etc

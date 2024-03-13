@@ -1,0 +1,28 @@
+terraform {
+  required_providers {
+    opentelekomcloud = {
+      source = "opentelekomcloud/opentelekomcloud"
+      version = ">= 1.35.0"
+      configuration_aliases = [ opentelekomcloud.otc_private, opentelekomcloud.otc_public ]
+    }
+  }
+}
+
+provider "opentelekomcloud" {
+   alias       = "otc_private"
+   auth_url    = "https://iam-pub.eu-ch2.sc.otc.t-systems.com/v3"
+   domain_name = "<YOUR_DOMAIN_OTC_PRIVATE>"
+   tenant_name = "<YOUR_TENANT_OTC_PRIVATE>"
+   user_name   = "<YOUR_USER_OTC_PRIVATE>"
+   password    = "<YOUR_PASSWORD_OTC_PRIVATE>"
+}
+
+provider "opentelekomcloud" {
+   alias       = "otc_public"
+   auth_url    = "https://iam.eu-de.otc.t-systems.com/v3"
+   domain_name = "<YOUR_DOMAIN_OTC_PUBLIC>"
+   tenant_name = "<YOUR_TENANT_OTC_PUBLIC>"
+   user_name   = "<YOUR_USER_OTC_PUBLIC>"
+   password    = "<YOUR_PASSWORD_OTC_PUBLIC>"
+}
+

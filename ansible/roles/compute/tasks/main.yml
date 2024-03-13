@@ -1,0 +1,39 @@
+- name: configure /etc/sysconfig/nfs
+  template:
+    src: templates/nfs.j2
+    dest: /etc/sysconfig/nfs
+
+- name: install rpcbind
+  yum:
+    name: rpcbind
+    state: present
+
+- name: install nfs-utils
+  yum:
+    name: nfs-utils
+    state: present
+
+- name: enable rpcbind service
+  systemd:
+    name: rpcbind
+    enabled: true
+  notify: restart rpcbind service
+
+- name: ensure /data exists
+  file:
+    path: /data
+    state: directory
+    mode: 0755
+
+- name: configure /etc/fstab
+  lineinfile:
+    dest: /etc/fstab
+    regexp: "^{{ hostvars['lsf-master']['ansible_default_ipv4']['address'] }}:/data.*"
+    line: "{{ hostvars['lsf-master']['ansible_default_ipv4']['address'] }}:/data /data nfs rw,sync,hard,intr 0 0"
+    state: present
+    backup: yes
+
+- name: ensure nfs file system /data is mounted
+  shell:
+    cmd: mount -a
+
