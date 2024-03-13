@@ -1,5 +1,5 @@
 
-This is to demonstrate the seamless integration of OTC Private and OTC Public. A compute cluster is created with resources both in OTC Private and OTC Public environments. We will execute a single Terraform script utilizing the same modules on both sides.
+This is to demonstrate the seamless integration of OTC Private and OTC Public. A compute cluster is created with resources both in OTC Private and OTC Public environments. To achieve this we will execute a single Terraform script utilizing the same modules on both sides.
 
 The resulting architecture will be as follows:
 

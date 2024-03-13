@@ -8,11 +8,6 @@
     name: libnsl
     state: present
 
-- name: install stress
-  yum:
-    name: stress
-    state: present
-
 - name: disable firewall
   service:
     name: firewalld
