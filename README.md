@@ -89,25 +89,25 @@ yes
 Copy the LSF SSH private key to the lsf-master host
 
 ```
-[linux@admin-host]$ scp -i ~/.ssh/id_rsa_lsf -o StrictHostKeyChecking=no ~/.ssh/id_rsa_lsf $(terraform output | awk '{ print $3 }' | sed 's/"//g'):/home/linux/.ssh/id_rsa
+[linux@admin-host]$ scp -i ~/.ssh/id_rsa_lsf -o StrictHostKeyChecking=no ~/.ssh/id_rsa_lsf linux@$(terraform output | awk '{ print $3 }' | sed 's/"//g'):/home/linux/.ssh/id_rsa
 ```
 
 Copy the Ansible playbooks to the lsf-master host
 
 ```
-[linux@admin-host]$ scp -i ~/.ssh/id_rsa_lsf -o StrictHostKeyChecking=no -r ansible $(terraform output | awk '{ print $3 }' | sed 's/"//g'):/home/linux/
+[linux@admin-host]$ scp -i ~/.ssh/id_rsa_lsf -o StrictHostKeyChecking=no -r ansible linux@$(terraform output | awk '{ print $3 }' | sed 's/"//g'):/home/linux/
 ```
 
 Copy the LSF Spectrum installation tar file to the lsf-master host
 
 ```
-[linux@admin-host]$ scp -i ~/.ssh/id_rsa_lsf -o StrictHostKeyChecking=no ../lsf_download/lsfsce10.2.0.12-x86_64.tar.gz $(terraform output | awk '{ print $3 }' | sed 's/"//g'):/data/lsf_download/.
+[linux@admin-host]$ scp -i ~/.ssh/id_rsa_lsf -o StrictHostKeyChecking=no ../lsf_download/lsfsce10.2.0.12-x86_64.tar.gz linux@$(terraform output | awk '{ print $3 }' | sed 's/"//g'):/data/lsf_download/.
 ```
 
 Now log in to lsf-master host
 
 ```
-[linux@admin-host]$ ssh -i ~/.ssh/id_rsa_lsf -o StrictHostKeyChecking=no $(terraform output | awk '{ print $3 }' | sed 's/"//g')
+[linux@admin-host]$ ssh -i ~/.ssh/id_rsa_lsf -o StrictHostKeyChecking=no linux@$(terraform output | awk '{ print $3 }' | sed 's/"//g')
 ```
 
 ## Configure and install the cluster
